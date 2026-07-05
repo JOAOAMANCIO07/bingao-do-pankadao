@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>BINGÃO DO PANKADÃO</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f4f4f4; padding: 10px; }
+        #topo { background: #333; color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        h1 { margin: 10px 0; font-size: 24px; }
+        #display-ultima { font-size: 28px; font-weight: bold; border: 3px solid white; padding: 5px 15px; display: inline-block; }
+        
+        #config-container { background: #e0e0e0; padding: 10px; margin: 10px 0; border-radius: 5px; font-weight: bold; }
+        #container-cartelas { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 400px; margin: 0 auto; }
+        
+        .cartela-mini { border: 3px solid black; background: white; padding: 5px; flex: 0 0 calc(50% - 15px); box-sizing: border-box; }
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
+        .celula { height: 30px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; cursor: pointer; }
+        .cabecalho { background: black; color: white; text-align: center; font-weight: bold; padding: 2px; font-size: 12px; }
+        .marcado { background: #ffcc00 !important; color: black; }
+    </style>
+</head>
+<body>
+
+    <div id="topo">
+        <h1>BINGÃO DO PANKADÃO</h1>
+        <div id="display-ultima">--</div>
+    </div>
+
+    <div id="login-container">
+        <input type="text" id="tel" placeholder="Seu Telefone">
+        <button onclick="registrar()">Conectar</button>
+    </div>
+
+    <div id="config-container" style="display:none;">
+        <label>
+            <input type="checkbox" id="autoCheck" checked onchange="renderizar()"> Marcação Automática
+        </label>
+    </div>
+
+    <div id="container-cartelas"></div>
+
+    <script>
+        const socket = io();
+        let meusNumeros = [];
+        let sorteados = [];
+        let manualMarcados = [];
+
+        function registrar() {
+            const tel = document.getElementById('tel').value;
+            if(tel) {
+                socket.emit('registrarCliente', tel);
+                document.getElementById('login-container').style.display = 'none';
+                document.getElementById('config-container').style.display = 'block';
+            }
+        }
+
+        socket.on('minhasCartelas', (cartelas) => {
+            meusNumeros = cartelas;
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('config-container').style.display = 'block';
+            renderizar();
+        });
+
+        socket.on('historicoSorteios', (lista) => { sorteados = lista; renderizar(); });
+        
+        socket.on('novoNumero', (num) => {
+            sorteados.push(num);
+            document.getElementById('display-ultima').innerText = converterParaBingo(num);
+            renderizar();
+        });
+
+        function toggleManual(num) {
+            if(!document.getElementById('autoCheck').checked) {
+                const index = manualMarcados.indexOf(num);
+                if(index > -1) manualMarcados.splice(index, 1);
+                else manualMarcados.push(num);
+                renderizar();
+            }
+        }
+
+        function converterParaBingo(num) {
+            const l = num <= 15 ? 'B' : num <= 30 ? 'I' : num <= 45 ? 'N' : num <= 60 ? 'G' : 'O';
+            return l + ' ' + num;
+        }
+
+        function renderizar() {
+            const container = document.getElementById('container-cartelas');
+            const auto = document.getElementById('autoCheck').checked;
+            container.innerHTML = '';
+            
+            meusNumeros.forEach(c => {
+                let html = '<div class="cartela-mini"><div class="grid">';
+                
+                // Cabeçalho corrigido para B-I-N-G-O
+                ['B', 'I', 'N', 'G', 'O'].forEach(l => html += `<div class="cabecalho">${l}</div>`);
+                
+                c.forEach(num => {
+                    const isMarcado = auto ? sorteados.includes(num) : manualMarcados.includes(num);
+                    const classe = isMarcado ? 'celula marcado' : 'celula';
+                    html += `<div class="${classe}" onclick="toggleManual(${num})">${num}</div>`;
+                });
+                
+                html += '</div></div>';
+                container.innerHTML += html;
+            });
+        }
+        
+        socket.on('reiniciar', () => location.reload());
+    </script>
+</body>
+</html>

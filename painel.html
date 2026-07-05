@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel do DJ - BINGÃO</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; gap: 20px; padding: 20px; background: #e0e0e0; }
+        .bloco { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .cartela-mini { display: inline-block; margin: 5px; border: 2px solid black; background: white; }
+        .grid { display: grid; grid-template-columns: repeat(5, 30px); }
+        .celula { width: 30px; height: 30px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; }
+        .cabecalho { background: black; color: white; text-align: center; font-size: 8px; font-weight: bold; height: 20px; line-height: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        .btn-reiniciar { background: red; color: white; font-weight: bold; padding: 15px; width: 100%; border: none; cursor: pointer; border-radius: 5px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="bloco" style="flex: 2;">
+        <h2>Registrar Venda</h2>
+        <input type="text" id="nome-comprador" placeholder="Nome do Cliente">
+        <input type="text" id="tel-comprador" placeholder="99999-9999">
+        <input type="number" id="qtd" value="1" min="1" max="20">
+        <button onclick="gerarTudo()">Gerar Visualização</button>
+        <button onclick="registrarVenda()" style="background: green; color: white;">Registrar e Enviar</button>
+        <div id="area-gerador"></div>
+
+        <h3>Relatório de Vendas</h3>
+        <table id="tabela-relatorio">
+            <tr><th>Nome</th><th>Telefone</th><th>Qtd</th><th>Ação</th></tr>
+        </table>
+    </div>
+
+    <div class="bloco" style="flex: 1;">
+        <h2>Controles do Jogo</h2>
+        <button onclick="sortear()">Sortear Número</button>
+        <h1 id="ultima-bola">Último: --</h1>
+        
+        <button class="btn-reiniciar" onclick="reiniciarPainelGeral()">REINICIAR PAINEL E JOGO</button>
+    </div>
+
+    <script>
+        const socket = io();
+        let cartelasGeradas = [];
+        let historicoLocal = [];
+
+        function renderizarCartelas(cartelas) {
+            const area = document.getElementById('area-gerador');
+            area.innerHTML = '';
+            cartelasGeradas = cartelas;
+            cartelas.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'cartela-mini';
+                div.innerHTML = `<div class="grid"><div class="cabecalho">B</div><div class="cabecalho">I</div><div class="cabecalho">N</div><div class="cabecalho">G</div><div class="cabecalho">O</div>${c.map(n => `<div class="celula">${n}</div>`).join('')}</div>`;
+                area.appendChild(div);
+            });
+        }
+
+        function gerarTudo() {
+            const qtd = parseInt(document.getElementById('qtd').value);
+            let novasCartelas = [];
+            for(let i = 0; i < qtd; i++) {
+                let colB = []; let colI = []; let colN = []; let colG = []; let colO = [];
+                while(colB.length < 5) { let n = Math.floor(Math.random()*15)+1; if(!colB.includes(n)) colB.push(n); }
+                while(colI.length < 5) { let n = Math.floor(Math.random()*15)+16; if(!colI.includes(n)) colI.push(n); }
+                while(colN.length < 5) { let n = Math.floor(Math.random()*15)+31; if(!colN.includes(n)) colN.push(n); }
+                while(colG.length < 5) { let n = Math.floor(Math.random()*15)+46; if(!colG.includes(n)) colG.push(n); }
+                while(colO.length < 5) { let n = Math.floor(Math.random()*15)+61; if(!colO.includes(n)) colO.push(n); }
+                let c = []; for(let j=0; j<5; j++) c.push(colB[j], colI[j], colN[j], colG[j], colO[j]);
+                novasCartelas.push(c);
+            }
+            renderizarCartelas(novasCartelas);
+        }
+
+        function registrarVenda() {
+            const nome = document.getElementById('nome-comprador').value;
+            const tel = document.getElementById('tel-comprador').value;
+            const qtd = parseInt(document.getElementById('qtd').value);
+            if(nome && tel && cartelasGeradas.length > 0) {
+                socket.emit('registrarVenda', { nome, telefone: tel, qtd: qtd, cartelas: cartelasGeradas });
+            } else { alert("Preencha todos os campos!"); }
+        }
+
+        function reiniciarPainelGeral() {
+            if(confirm("ATENÇÃO: Isso apagará todas as vendas e o sorteio atual. Continuar?")) {
+                socket.emit('reiniciarPainel');
+                location.reload(); 
+            }
+        }
+
+        function executarCarregamento(index) {
+            const v = historicoLocal[index];
+            document.getElementById('nome-comprador').value = v.nome;
+            document.getElementById('tel-comprador').value = v.telefone;
+            document.getElementById('qtd').value = v.qtd;
+            renderizarCartelas(v.cartelas);
+        }
+
+        socket.on('atualizarRelatorio', (lista) => {
+            historicoLocal = lista;
+            const tabela = document.getElementById('tabela-relatorio');
+            tabela.innerHTML = '<tr><th>Nome</th><th>Telefone</th><th>Qtd</th><th>Ação</th></tr>';
+            lista.forEach((venda, index) => {
+                tabela.innerHTML += `<tr>
+                    <td>${venda.nome}</td><td>${venda.telefone}</td><td>${venda.qtd}</td>
+                    <td><button onclick='executarCarregamento(${index})'>Carregar</button></td>
+                </tr>`;
+            });
+        });
+
+        function sortear() { socket.emit('numeroSorteado', Math.floor(Math.random() * 75) + 1); }
+        socket.on('novoNumero', (num) => {
+            const l = num <= 15 ? 'B' : num <= 30 ? 'I' : num <= 45 ? 'N' : num <= 60 ? 'G' : 'O';
+            document.getElementById('ultima-bola').innerText = 'Último: ' + l + '-' + num;
+        });
+    </script>
+</body>
+</html>

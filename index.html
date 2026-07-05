@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Cliente BINGO</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        #display-sorteio { font-size: 3rem; font-weight: bold; color: black; border: 3px solid green; padding: 10px; margin-bottom: 20px; }
+        .cartela { border: 2px solid black; padding: 10px; margin: 10px; display: inline-block; }
+        .grid { display: grid; grid-template-columns: repeat(5, 40px); }
+        .celula { width: 40px; height: 40px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; }
+        .marcada { background-color: blue !important; color: white !important; }
+    </style>
+</head>
+<body>
+    <h1>Minha Cartela</h1>
+    <div id="display-sorteio">Aguardando...</div>
+    <div id="area-cartela"></div>
+
+    <script>
+        var socket = io();
+
+        socket.on('connect', () => {
+            console.log('Conectado ao servidor! ID:', socket.id);
+        });
+
+        // Recebe o número do sorteio
+        socket.on('novoNumero', function(num) {
+            console.log('Número recebido:', num); // Isso aparece no seu console?
+            const l = num <= 15 ? 'B' : num <= 30 ? 'I' : num <= 45 ? 'N' : num <= 60 ? 'G' : 'O';
+            
+            // Atualiza o display visual
+            document.getElementById('display-sorteio').innerText = l + ' ' + num;
+            
+            // Marca a célula
+            document.querySelectorAll('.celula').forEach(cel => {
+                if(cel.innerText == num) cel.classList.add('marcada');
+            });
+        });
+
+        // Recebe as cartelas
+        socket.on('minhasCartelas', function(cartelas) {
+            var area = document.getElementById('area-cartela');
+            area.innerHTML = '';
+            cartelas.forEach(function(c) {
+                var div = document.createElement('div'); div.className = 'cartela';
+                let html = '<div class="grid">';
+                c.forEach(n => html += '<div class="celula">' + n + '</div>');
+                div.innerHTML = html + '</div>';
+                area.appendChild(div);
+            });
+        });
+    </script>
+</body>
+</html>
