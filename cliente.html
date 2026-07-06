@@ -11,6 +11,36 @@
         #display-ultima { font-size: 28px; font-weight: bold; border: 3px solid white; padding: 5px 15px; display: inline-block; }
         
         #login-container { display: block; padding: 20px; }
+        
+        /* AJUSTADO: Campo de telefone 4 vezes maior, com números grandes e fácil de digitar */
+        #login-container input { 
+            width: 100%; 
+            max-width: 320px; 
+            height: 60px; 
+            font-size: 24px; 
+            font-weight: bold; 
+            text-align: center; 
+            margin-bottom: 15px; 
+            border: 3px solid #333; 
+            border-radius: 8px; 
+            box-sizing: border-box;
+        }
+        
+        /* AJUSTADO: Botão grande acompanhando o tamanho do campo para facilitar o clique */
+        #login-container button { 
+            width: 100%; 
+            max-width: 320px; 
+            height: 55px; 
+            font-size: 20px; 
+            font-weight: bold; 
+            background: #28a745; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
         #config-container { background: #e0e0e0; padding: 10px; margin: 10px 0; border-radius: 5px; font-weight: bold; display: none; }
         
         /* ORGANIZAÇÃO EM COLUNA ÚNICA (UMA EMBAIXO DA OUTRA) */
@@ -34,7 +64,8 @@
     </div>
 
     <div id="login-container">
-        <input type="text" id="tel" placeholder="Seu Telefone">
+        <!-- O campo e o botão abaixo agora vão ocupar a tela com destaque -->
+        <input type="tel" id="tel" placeholder="Digite seu Telefone">
         <button onclick="registrar()">Conectar e Buscar Cartelas</button>
     </div>
 
@@ -54,12 +85,10 @@
         function registrar() {
             const tel = document.getElementById('tel').value;
             if(tel) {
-                // Envia o sinal para o servidor buscar no relatório
                 socket.emit('registrarCliente', tel);
             }
         }
 
-        // Resposta do servidor com as cartelas encontradas
         socket.on('minhasCartelas', (cartelas) => {
             meusNumeros = cartelas;
             document.getElementById('login-container').style.display = 'none';
