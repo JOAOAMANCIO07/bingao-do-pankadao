@@ -13,16 +13,15 @@
         #login-container { display: block; padding: 20px; }
         #config-container { background: #e0e0e0; padding: 10px; margin: 10px 0; border-radius: 5px; font-weight: bold; display: none; }
         
-        /* AJUSTADO: Agora organiza as cartelas em uma coluna única (uma embaixo da outra) */
+        /* ORGANIZAÇÃO EM COLUNA ÚNICA (UMA EMBAIXO DA OUTRA) */
         #container-cartelas { display: flex; flex-direction: column; align-items: center; gap: 15px; max-width: 400px; margin: 0 auto; }
         
-        /* AJUSTADO: Ocupa 100% da largura disponível para os números ficarem grandes */
+        /* LARGURA TOTAL PARA O CELULAR */
         .cartela-mini { border: 3px solid black; background: white; padding: 8px; width: 100%; max-width: 360px; box-sizing: border-box; border-radius: 8px; }
-        
         .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
         
-        /* AJUSTADO: Aumentou a altura e o tamanho da fonte para leitura rápida no celular */
-        .celula { height: 45px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; cursor: pointer; background: #fff; }
+        /* NÚMEROS GRANDES PARA LEITURA RÁPIDA */
+        .celula { height: 45px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; background: #fff; }
         .cabecalho { background: black; color: white; text-align: center; font-weight: bold; padding: 6px 0; font-size: 16px; }
         .marcado { background: #ffcc00 !important; color: black; }
     </style>
@@ -36,7 +35,7 @@
 
     <div id="login-container">
         <input type="text" id="tel" placeholder="Seu Telefone">
-        <button onclick="registrar()">Conectar</button>
+        <button onclick="registrar()">Conectar e Buscar Cartelas</button>
     </div>
 
     <div id="config-container">
@@ -51,17 +50,16 @@
         const socket = io("https://bingao-do-pankadao.onrender.com");
         let meusNumeros = [];
         let sorteados = [];
-        let manualMarcados = [];
 
         function registrar() {
             const tel = document.getElementById('tel').value;
             if(tel) {
+                // Envia o sinal para o servidor buscar no relatório
                 socket.emit('registrarCliente', tel);
-                document.getElementById('login-container').style.display = 'none';
-                document.getElementById('config-container').style.display = 'block';
             }
         }
 
+        // Resposta do servidor com as cartelas encontradas
         socket.on('minhasCartelas', (cartelas) => {
             meusNumeros = cartelas;
             document.getElementById('login-container').style.display = 'none';
@@ -76,15 +74,6 @@
             document.getElementById('display-ultima').innerText = converterParaBingo(num);
             renderizar();
         });
-
-        function toggleManual(num) {
-            if(!document.getElementById('autoCheck').checked) {
-                const index = manualMarcados.indexOf(num);
-                if(index > -1) manualMarcados.splice(index, 1);
-                else manualMarcados.push(num);
-                renderizar();
-            }
-        }
 
         function converterParaBingo(num) {
             const l = num <= 15 ? 'B' : num <= 30 ? 'I' : num <= 45 ? 'N' : num <= 60 ? 'G' : 'O';
@@ -101,9 +90,9 @@
                 ['B', 'I', 'N', 'G', 'O'].forEach(l => html += `<div class="cabecalho">${l}</div>`);
                 
                 c.forEach(num => {
-                    const isMarcado = auto ? sorteados.includes(num) : manualMarcados.includes(num);
+                    const isMarcado = auto && sorteados.includes(num);
                     const classe = isMarcado ? 'celula marcado' : 'celula';
-                    html += `<div class="${classe}" onclick="toggleManual(${num})">${num}</div>`;
+                    html += `<div class="${classe}">${num}</div>`;
                 });
                 
                 html += '</div></div>';
