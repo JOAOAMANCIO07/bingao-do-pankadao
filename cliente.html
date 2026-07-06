@@ -10,9 +10,15 @@
         h1 { margin: 10px 0; font-size: 24px; }
         #display-ultima { font-size: 28px; font-weight: bold; border: 3px solid white; padding: 5px 15px; display: inline-block; }
         
-        #login-container { display: block; padding: 20px; }
+        /* AJUSTADO: Força o campo em cima e o botão embaixo bem centralizados */
+        #login-container { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px; 
+        }
         
-        /* AJUSTADO: Campo de telefone 4 vezes maior, com números grandes e fácil de digitar */
+        /* Campo de telefone 4 vezes maior */
         #login-container input { 
             width: 100%; 
             max-width: 320px; 
@@ -20,13 +26,13 @@
             font-size: 24px; 
             font-weight: bold; 
             text-align: center; 
-            margin-bottom: 15px; 
+            margin-bottom: 12px; /* Espaço controlado entre o campo e o botão */
             border: 3px solid #333; 
             border-radius: 8px; 
             box-sizing: border-box;
         }
         
-        /* AJUSTADO: Botão grande acompanhando o tamanho do campo para facilitar o clique */
+        /* Botão grande embaixo */
         #login-container button { 
             width: 100%; 
             max-width: 320px; 
@@ -39,6 +45,7 @@
             border-radius: 8px; 
             cursor: pointer; 
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-sizing: border-box;
         }
         
         #config-container { background: #e0e0e0; padding: 10px; margin: 10px 0; border-radius: 5px; font-weight: bold; display: none; }
@@ -64,7 +71,7 @@
     </div>
 
     <div id="login-container">
-        <!-- O campo e o botão abaixo agora vão ocupar a tela com destaque -->
+        <!-- Agora o layout respeita rigorosamente a ordem: Campo em cima, Botão embaixo -->
         <input type="tel" id="tel" placeholder="Digite seu Telefone">
         <button onclick="registrar()">Conectar e Buscar Cartelas</button>
     </div>
