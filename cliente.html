@@ -43,11 +43,9 @@
             cursor: pointer; 
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             box-sizing: border-box;
-            /* Garante que o botão responda rápido ao toque no celular */
             touch-action: manipulation;
         }
 
-        /* Efeito visual ao dar o toque na tela */
         #login-container button:active {
             background: #218838;
             transform: scale(0.98);
@@ -74,7 +72,7 @@
 
     <div id="login-container">
         <input type="tel" id="tel" placeholder="Digite seu Telefone">
-        <button type="button" onclick="registrar()">Conectar e Buscar Cartelas</button>
+        <button type="button" id="btn-conectar">Conectar e Buscar Cartelas</button>
     </div>
 
     <div id="config-container">
@@ -90,16 +88,21 @@
         let meusNumeros = [];
         let sorteados = [];
 
-        function registrar() {
+        // Escutador robusto para o botão de conectar (funciona no clique e no toque)
+        const botao = document.getElementById('btn-conectar');
+        
+        function executarRegistro(e) {
+            if (e) e.preventDefault(); // Impede comportamentos estranhos do navegador
             const tel = document.getElementById('tel').value;
             if(tel) {
-                console.log("Tentando conectar com o telefone:", tel);
                 socket.emit('registrarCliente', tel);
             }
         }
 
+        botao.addEventListener('click', executarRegistro);
+        botao.addEventListener('touchstart', executarRegistro, {passive: true});
+
         socket.on('minhasCartelas', (cartelas) => {
-            console.log("Cartelas recebidas com sucesso!");
             meusNumeros = cartelas;
             document.getElementById('login-container').style.display = 'none';
             document.getElementById('config-container').style.display = 'block';
