@@ -1,67 +1,52 @@
-// Versao 2.0 - Atualizacao Forcada do Bingao
+// Versao 3.0 - Busca Automatica de Cartelas por Telefone
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const path = require('path');
 
 const app = express();
-
-// Ativa o CORS para permitir conexões externas
-app.use(cors({
-    origin: "*",
-    methods: ["GET", "POST"]
-}));
-
-// Serve as páginas HTML direto da pasta principal
+app.use(cors({ origin: "*", methods: ["GET", "POST"] }));
 app.use(express.static(__dirname));
 
 const server = http.createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
-});
+const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
 
 let sorteados = [];
 let clientes = {};
-let listaVendas = []; // Guarda o histórico para o relatório
+let listaVendas = [];
 
 io.on('connection', (socket) => {
-    console.log(`Nova conexão estabelecida: ${socket.id}`);
-
-    // Envia o relatório assim que o painel conecta
+    console.log(`Nova conexão: ${socket.id}`);
     socket.emit('atualizarRelatorio', listaVendas);
 
-    // Quando o cliente envia o telefone para conectar
     socket.on('registrarCliente', (tel) => {
         clientes[tel] = socket.id;
-        console.log(`Cliente registrado com o telefone: ${tel}`);
+        console.log(`Cliente conectado: ${tel}`);
+        
+        // BUSCA AUTOMÁTICA: Se o cliente conectar, o servidor já varre o relatório
+        // e entrega as cartelas dele na hora, mesmo se a venda foi feita antes!
+        const vendaEncontrada = listaVendas.find(v => v.telefone === tel);
+        if (vendaEncontrada) {
+            socket.emit('minhasCartelas', vendaEncontrada.cartelas);
+            console.log(`Cartelas antigas recuperadas e enviadas para ${tel}`);
+        }
+        
         socket.emit('historicoSorteios', sorteados);
     });
 
-    // Quando o painel envia as cartelas
     socket.on('enviarCartela', (dados) => {
         const { nome, tel, cartelas } = dados;
         
-        // Salva no relatório do painel
         listaVendas.push({ nome, telefone: tel, qtd: cartelas.length, cartelas });
-        
-        // Atualiza a tabela em todos os painéis abertos
         io.emit('atualizarRelatorio', listaVendas);
 
-        // Entrega as cartelas para o cliente se ele estiver online
         const socketId = clientes[tel];
         if (socketId) {
             io.to(socketId).emit('minhasCartelas', cartelas);
-            console.log(`Cartelas enviadas com sucesso para o cliente ${tel}`);
-        } else {
-            console.log(`Aviso: Cliente ${tel} não está online agora, mas a venda foi salva no relatório.`);
+            console.log(`Cartelas entregues ao vivo para ${tel}`);
         }
     });
 
-    // Sorteio de pedras
     socket.on('sortearNumero', (num) => {
         if (!sorteados.includes(num)) {
             sorteados.push(num);
@@ -69,18 +54,15 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Reiniciar a rodada
     socket.on('reiniciarJogo', () => {
         sorteados = [];
         listaVendas = [];
         io.emit('atualizarRelatorio', listaVendas);
         io.emit('reiniciar');
-        console.log("O jogo foi reiniciado!");
     });
 });
 
-// Porta padrão do Render
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Servidor do Bingão rodando com sucesso na porta ${PORT}`);
+    console.log(`Servidor rodando na porta ${PORT}`);
 });
