@@ -51,7 +51,6 @@
             transform: scale(0.98);
         }
         
-        /* AJUSTADO: Visual limpo para a configuração de áudio e automação */
         #config-container { 
             background: #e0e0e0; 
             padding: 12px; 
@@ -103,7 +102,7 @@
 
         const botao = document.getElementById('btn-conectar');
         
-        function executarRegistro(e) {
+        function ejecutarRegistro(e) {
             if (e) e.preventDefault();
             const tel = document.getElementById('tel').value;
             if(tel) {
@@ -119,7 +118,6 @@
             document.getElementById('login-container').style.display = 'none';
             document.getElementById('config-container').style.display = 'block';
             renderizar();
-            // Fala de boas-vindas para testar o som logo na entrada!
             falarTexto("Conectado ao Bingão do Pankadão! Boa sorte!");
         });
 
@@ -131,22 +129,26 @@
             document.getElementById('display-ultima').innerText = textoPedra;
             renderizar();
             
-            // NOVO: Executa a chamada por voz da pedra sorteada
             if(document.getElementById('audioCheck').checked) {
                 falarTexto(textoPedra);
             }
         });
 
-        // NOVO: Função inteligente que faz o dispositivo falar em português
+        // AQUI ESTÁ O CÓDIGO DA VOZ CORRIGIDA:
         function falarTexto(texto) {
             if ('speechSynthesis' in window) {
-                // Cancela qualquer fala presa anterior para não encavalar o áudio
                 window.speechSynthesis.cancel(); 
                 
-                const mensagem = new SpeechSynthesisUtterance(texto);
-                mensagem.lang = 'pt-BR'; // Força sotaque brasileiro
-                mensagem.rate = 0.9;     // Velocidade da fala (um pouquinho mais cadenciado para o bingo)
-                mensagem.pitch = 1.0;    // Tom da voz
+                let textoCorrigido = texto;
+                // Força o robô a falar "Ó" bem aberto em vez de "U"
+                if (texto.startsWith("O ")) {
+                    textoCorrigido = texto.replace("O ", "Ó ");
+                }
+                
+                const mensagem = new SpeechSynthesisUtterance(textoCorrigido);
+                mensagem.lang = 'pt-BR'; 
+                mensagem.rate = 0.9;     
+                mensagem.pitch = 1.0;    
                 
                 window.speechSynthesis.speak(mensagem);
             }
