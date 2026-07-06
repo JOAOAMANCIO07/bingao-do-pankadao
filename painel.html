@@ -41,7 +41,8 @@
     </div>
 
     <script>
-        const socket = io();
+        // CONEXÃO APONTANDO DIRETO PARA O SEU RENDER
+        const socket = io("https://bingao-do-pankadao.onrender.com");
         let cartelasGeradas = [];
         let historicoLocal = [];
 
@@ -78,18 +79,20 @@
             const tel = document.getElementById('tel-comprador').value;
             const qtd = parseInt(document.getElementById('qtd').value);
             if(nome && tel && cartelasGeradas.length > 0) {
-                socket.emit('registrarVenda', { nome, telefone: tel, qtd: qtd, cartelas: cartelasGeradas });
-            } else { alert("Preencha todos os campos!"); }
+                // Modificado para usar o evento correto esperado pelo server novo 'enviarCartela'
+                socket.emit('enviarCartela', { nome, tel, cartelas: cartelasGeradas });
+                alert("Cartelas enviadas com sucesso para " + nome);
+            } else { alert("Preencha todos os campos e gere a visualização!"); }
         }
 
         function reiniciarPainelGeral() {
             if(confirm("ATENÇÃO: Isso apagará todas as vendas e o sorteio atual. Continuar?")) {
-                socket.emit('reiniciarPainel');
+                socket.emit('reiniciarJogo');
                 location.reload(); 
             }
         }
 
-        function executarCarregamento(index) {
+        function ejecutarCarregamento(index) {
             const v = historicoLocal[index];
             document.getElementById('nome-comprador').value = v.nome;
             document.getElementById('tel-comprador').value = v.telefone;
@@ -109,7 +112,7 @@
             });
         });
 
-        function sortear() { socket.emit('numeroSorteado', Math.floor(Math.random() * 75) + 1); }
+        function sortear() { socket.emit('sortearNumero', Math.floor(Math.random() * 75) + 1); }
         socket.on('novoNumero', (num) => {
             const l = num <= 15 ? 'B' : num <= 30 ? 'I' : num <= 45 ? 'N' : num <= 60 ? 'G' : 'O';
             document.getElementById('ultima-bola').innerText = 'Último: ' + l + '-' + num;
