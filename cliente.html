@@ -51,7 +51,17 @@
             transform: scale(0.98);
         }
         
-        #config-container { background: #e0e0e0; padding: 10px; margin: 10px 0; border-radius: 5px; font-weight: bold; display: none; }
+        /* AJUSTADO: Visual limpo para a configuração de áudio e automação */
+        #config-container { 
+            background: #e0e0e0; 
+            padding: 12px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+            font-weight: bold; 
+            display: none; 
+            font-size: 16px;
+        }
+        .opcao-config { margin: 5px 15px; display: inline-block; cursor: pointer; }
         
         #container-cartelas { display: flex; flex-direction: column; align-items: center; gap: 15px; max-width: 400px; margin: 0 auto; }
         
@@ -76,9 +86,12 @@
     </div>
 
     <div id="config-container">
-        <label>
+        <span class="opcao-config">
             <input type="checkbox" id="autoCheck" checked onchange="renderizar()"> Marcação Automática
-        </label>
+        </span>
+        <span class="opcao-config">
+            <input type="checkbox" id="audioCheck" checked> Voz Ativada
+        </span>
     </div>
 
     <div id="container-cartelas"></div>
@@ -88,11 +101,10 @@
         let meusNumeros = [];
         let sorteados = [];
 
-        // Escutador robusto para o botão de conectar (funciona no clique e no toque)
         const botao = document.getElementById('btn-conectar');
         
         function executarRegistro(e) {
-            if (e) e.preventDefault(); // Impede comportamentos estranhos do navegador
+            if (e) e.preventDefault();
             const tel = document.getElementById('tel').value;
             if(tel) {
                 socket.emit('registrarCliente', tel);
@@ -107,15 +119,38 @@
             document.getElementById('login-container').style.display = 'none';
             document.getElementById('config-container').style.display = 'block';
             renderizar();
+            // Fala de boas-vindas para testar o som logo na entrada!
+            falarTexto("Conectado ao Bingão do Pankadão! Boa sorte!");
         });
 
         socket.on('historicoSorteios', (lista) => { sorteados = lista; renderizar(); });
         
         socket.on('novoNumero', (num) => {
             sorteados.push(num);
-            document.getElementById('display-ultima').innerText = converterParaBingo(num);
+            const textoPedra = converterParaBingo(num);
+            document.getElementById('display-ultima').innerText = textoPedra;
             renderizar();
+            
+            // NOVO: Executa a chamada por voz da pedra sorteada
+            if(document.getElementById('audioCheck').checked) {
+                falarTexto(textoPedra);
+            }
         });
+
+        // NOVO: Função inteligente que faz o dispositivo falar em português
+        function falarTexto(texto) {
+            if ('speechSynthesis' in window) {
+                // Cancela qualquer fala presa anterior para não encavalar o áudio
+                window.speechSynthesis.cancel(); 
+                
+                const mensagem = new SpeechSynthesisUtterance(texto);
+                mensagem.lang = 'pt-BR'; // Força sotaque brasileiro
+                mensagem.rate = 0.9;     // Velocidade da fala (um pouquinho mais cadenciado para o bingo)
+                mensagem.pitch = 1.0;    // Tom da voz
+                
+                window.speechSynthesis.speak(mensagem);
+            }
+        }
 
         function converterParaBingo(num) {
             const l = num <= 15 ? 'B' : num <= 30 ? 'I' : num <= 45 ? 'N' : num <= 60 ? 'G' : 'O';
