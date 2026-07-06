@@ -10,7 +10,8 @@
         h1 { margin: 10px 0; font-size: 24px; }
         #display-ultima { font-size: 28px; font-weight: bold; border: 3px solid white; padding: 5px 15px; display: inline-block; }
         
-        #config-container { background: #e0e0e0; padding: 10px; margin: 10px 0; border-radius: 5px; font-weight: bold; }
+        #login-container { display: block; padding: 20px; }
+        #config-container { background: #e0e0e0; padding: 10px; margin: 10px 0; border-radius: 5px; font-weight: bold; display: none; }
         #container-cartelas { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 400px; margin: 0 auto; }
         
         .cartela-mini { border: 3px solid black; background: white; padding: 5px; flex: 0 0 calc(50% - 15px); box-sizing: border-box; }
@@ -32,7 +33,7 @@
         <button onclick="registrar()">Conectar</button>
     </div>
 
-    <div id="config-container" style="display:none;">
+    <div id="config-container">
         <label>
             <input type="checkbox" id="autoCheck" checked onchange="renderizar()"> Marcação Automática
         </label>
@@ -41,7 +42,8 @@
     <div id="container-cartelas"></div>
 
     <script>
-        const socket = io();
+        // Conexão apontando diretamente para a URL do seu Render
+        const socket = io("https://bingao-do-pankadao.onrender.com");
         let meusNumeros = [];
         let sorteados = [];
         let manualMarcados = [];
@@ -55,6 +57,7 @@
             }
         }
 
+        // Escuta o recebimento das cartelas vindas do servidor
         socket.on('minhasCartelas', (cartelas) => {
             meusNumeros = cartelas;
             document.getElementById('login-container').style.display = 'none';
@@ -91,8 +94,6 @@
             
             meusNumeros.forEach(c => {
                 let html = '<div class="cartela-mini"><div class="grid">';
-                
-                // Cabeçalho corrigido para B-I-N-G-O
                 ['B', 'I', 'N', 'G', 'O'].forEach(l => html += `<div class="cabecalho">${l}</div>`);
                 
                 c.forEach(num => {
