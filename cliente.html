@@ -43,10 +43,12 @@
             cursor: pointer; 
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             box-sizing: border-box;
+            touch-action: manipulation;
         }
 
         #login-container button:active {
             background: #218838;
+            transform: scale(0.98);
         }
         
         #config-container { 
@@ -79,8 +81,7 @@
 
     <div id="login-container">
         <input type="tel" id="tel" placeholder="Digite seu Telefone">
-        <!-- Voltou para o onclick tradicional e direto que nunca falha -->
-        <button type="button" onclick="registrar()">Conectar e Buscar Cartelas</button>
+        <button type="button" id="btn-conectar">Conectar e Buscar Cartelas</button>
     </div>
 
     <div id="config-container">
@@ -99,20 +100,25 @@
         let meusNumeros = [];
         let sorteados = [];
 
-        // Função de registro super direta e limpa
-        function registrar() {
+        const botao = document.getElementById('btn-conectar');
+        
+        function ejecutarRegistro(e) {
+            if (e) e.preventDefault();
             const tel = document.getElementById('tel').value;
             if(tel) {
                 socket.emit('registrarCliente', tel);
             }
         }
 
+        // AJUSTADO: Evento único que resolve cliques e toques sem duplicar
+        botao.addEventListener('pointerdown', ejecutarRegistro);
+
         socket.on('minhasCartelas', (cartelas) => {
             meusNumeros = cartelas;
             document.getElementById('login-container').style.display = 'none';
             document.getElementById('config-container').style.display = 'block';
             renderizar();
-            falarTexto("Conectado!");
+            falarTexto("Conectado ao Bingão do Pankadão! Boa sorte!");
         });
 
         socket.on('historicoSorteios', (lista) => { sorteados = lista; renderizar(); });
@@ -128,26 +134,21 @@
             }
         });
 
-        // Função de voz isolada e protegida contra travamentos
         function falarTexto(texto) {
-            try {
-                if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel(); 
-                    
-                    let falarIsso = texto;
-                    if (texto.indexOf("O ") === 0) {
-                        falarIsso = "Ó " + texto.substring(2);
-                    }
-                    
-                    const mensagem = new SpeechSynthesisUtterance(falarIsso);
-                    mensagem.lang = 'pt-BR'; 
-                    mensagem.rate = 0.9;     
-                    mensagem.pitch = 1.0;    
-                    
-                    window.speechSynthesis.speak(mensagem);
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); 
+                
+                let textoCorrigido = texto;
+                if (texto.startsWith("O ")) {
+                    textoCorrigido = texto.replace("O ", "Ó ");
                 }
-            } catch (e) {
-                console.log("Erro na voz, mas o sistema continua rodando:", e);
+                
+                const mensagem = new SpeechSynthesisUtterance(textoCorrigido);
+                mensagem.lang = 'pt-BR'; 
+                mensagem.rate = 0.9;     
+                mensagem.pitch = 1.0;    
+                
+                window.speechSynthesis.speak(mensagem);
             }
         }
 
