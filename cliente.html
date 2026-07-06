@@ -10,7 +10,6 @@
         h1 { margin: 10px 0; font-size: 24px; }
         #display-ultima { font-size: 28px; font-weight: bold; border: 3px solid white; padding: 5px 15px; display: inline-block; }
         
-        /* AJUSTADO: Força o campo em cima e o botão embaixo bem centralizados */
         #login-container { 
             display: flex; 
             flex-direction: column; 
@@ -18,7 +17,6 @@
             padding: 20px; 
         }
         
-        /* Campo de telefone 4 vezes maior */
         #login-container input { 
             width: 100%; 
             max-width: 320px; 
@@ -26,13 +24,12 @@
             font-size: 24px; 
             font-weight: bold; 
             text-align: center; 
-            margin-bottom: 12px; /* Espaço controlado entre o campo e o botão */
+            margin-bottom: 12px; 
             border: 3px solid #333; 
             border-radius: 8px; 
             box-sizing: border-box;
         }
         
-        /* Botão grande embaixo */
         #login-container button { 
             width: 100%; 
             max-width: 320px; 
@@ -46,18 +43,23 @@
             cursor: pointer; 
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             box-sizing: border-box;
+            /* Garante que o botão responda rápido ao toque no celular */
+            touch-action: manipulation;
+        }
+
+        /* Efeito visual ao dar o toque na tela */
+        #login-container button:active {
+            background: #218838;
+            transform: scale(0.98);
         }
         
         #config-container { background: #e0e0e0; padding: 10px; margin: 10px 0; border-radius: 5px; font-weight: bold; display: none; }
         
-        /* ORGANIZAÇÃO EM COLUNA ÚNICA (UMA EMBAIXO DA OUTRA) */
         #container-cartelas { display: flex; flex-direction: column; align-items: center; gap: 15px; max-width: 400px; margin: 0 auto; }
         
-        /* LARGURA TOTAL PARA O CELULAR */
         .cartela-mini { border: 3px solid black; background: white; padding: 8px; width: 100%; max-width: 360px; box-sizing: border-box; border-radius: 8px; }
         .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
         
-        /* NÚMEROS GRANDES PARA LEITURA RÁPIDA */
         .celula { height: 45px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; background: #fff; }
         .cabecalho { background: black; color: white; text-align: center; font-weight: bold; padding: 6px 0; font-size: 16px; }
         .marcado { background: #ffcc00 !important; color: black; }
@@ -71,9 +73,8 @@
     </div>
 
     <div id="login-container">
-        <!-- Agora o layout respeita rigorosamente a ordem: Campo em cima, Botão embaixo -->
         <input type="tel" id="tel" placeholder="Digite seu Telefone">
-        <button onclick="registrar()">Conectar e Buscar Cartelas</button>
+        <button type="button" onclick="registrar()">Conectar e Buscar Cartelas</button>
     </div>
 
     <div id="config-container">
@@ -92,11 +93,13 @@
         function registrar() {
             const tel = document.getElementById('tel').value;
             if(tel) {
+                console.log("Tentando conectar com o telefone:", tel);
                 socket.emit('registrarCliente', tel);
             }
         }
 
         socket.on('minhasCartelas', (cartelas) => {
+            console.log("Cartelas recebidas com sucesso!");
             meusNumeros = cartelas;
             document.getElementById('login-container').style.display = 'none';
             document.getElementById('config-container').style.display = 'block';
